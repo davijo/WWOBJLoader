@@ -70,12 +70,24 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 	WWOBJLoader2Director.prototype.prepareWorkers = function ( callbacks, maxQueueSize, maxWebWorkers ) {
 		if ( callbacks != null ) {
 
+			var potentialArray;
 			for ( var key in callbacks ) {
 
-				if ( callbacks.hasOwnProperty( key ) ) this.workerDescription.callbacks[ key ] = callbacks[ key ];
+				if ( callbacks.hasOwnProperty( key ) ) {
 
+					potentialArray = callbacks[ key ];
+					if ( ! Array.isArray( potentialArray ) ) {
+
+						this.workerDescription.callbacks[ key ] = [ potentialArray ];
+
+					} else {
+
+						this.workerDescription.callbacks[ key ] = potentialArray;
+
+					}
+
+				}
 			}
-
 		}
 
 		this.maxQueueSize = Math.min( maxQueueSize, MAX_QUEUE_SIZE );
@@ -173,6 +185,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 				var runParams = scope.instructionQueue[ 0 ];
 				if ( runParams != null ) {
 
+					console.log( '\nAssigning next item from queue to worker (queue length: ' + scope.instructionQueue.length + ')\n\n' );
 					rekick.prepareRun( runParams );
 					rekick.run();
 					scope.instructionQueue.shift();
@@ -182,7 +195,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 			}
 		};
 
-		webWorker.callbacks.director[ 'completedLoading' ] = managerCompletedLoading;
+		webWorker.callbacks.completedLoading.push( managerCompletedLoading );
 		webWorker.instanceNo = this.workerDescription.webWorkers.length;
 		this.workerDescription.webWorkers.push( webWorker );
 		return webWorker;
